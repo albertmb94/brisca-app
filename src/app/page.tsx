@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic";
+
 import Link from "next/link";
 import { PlusCircle, Play, Trophy, Clock, Users, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
