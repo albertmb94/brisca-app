@@ -1,13 +1,15 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { Plus, Minus, ArrowLeft } from "lucide-react";
+import { Plus, Minus, ArrowLeft, Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { createGame } from "@/lib/actions/game-actions";
+import { useSettings } from "@/hooks/use-settings";
+import Link from "next/link";
 
 function isRedirectError(error: any): boolean {
   return error?.message?.includes("NEXT_REDIRECT") || error?.digest?.includes("NEXT_REDIRECT");
@@ -15,7 +17,11 @@ function isRedirectError(error: any): boolean {
 
 export default function NuevaPartidaPage() {
   const router = useRouter();
-  const [playerCount, setPlayerCount] = useState(3);
+  const settings = useSettings();
+
+  const [playerCount, setPlayerCount] = useState(
+    Math.max(2, settings.defaultPlayerNames.length || 3)
+  );
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -25,7 +31,6 @@ export default function NuevaPartidaPage() {
     try {
       await createGame(formData);
     } catch (error: any) {
-      // Ignorar errores de redirección (son navegación normal, no errores reales)
       if (isRedirectError(error)) {
         return;
       }
@@ -36,11 +41,19 @@ export default function NuevaPartidaPage() {
 
   return (
     <div className="max-w-2xl mx-auto space-y-6">
-      <div className="flex items-center gap-2">
-        <Button variant="ghost" size="icon" onClick={() => router.back()}>
-          <ArrowLeft className="h-4 w-4" />
-        </Button>
-        <h1 className="text-2xl font-bold">Nueva Partida</h1>
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <Button variant="ghost" size="icon" onClick={() => router.back()}>
+            <ArrowLeft className="h-4 w-4" />
+          </Button>
+          <h1 className="text-2xl font-bold">Nueva Partida</h1>
+        </div>
+        <Link href="/ajustes">
+          <Button variant="outline" size="sm">
+            <Settings className="mr-2 h-4 w-4" />
+            Ajustes
+          </Button>
+        </Link>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">
@@ -62,22 +75,46 @@ export default function NuevaPartidaPage() {
               </div>
               <div className="space-y-2">
                 <Label htmlFor="targetScore">Puntos objetivo</Label>
-                <Input id="targetScore" name="targetScore" type="number" defaultValue={150} min={50} />
+                <Input
+                  id="targetScore"
+                  name="targetScore"
+                  type="number"
+                  defaultValue={settings.defaultTargetScore}
+                  min={50}
+                />
               </div>
             </div>
 
             <div className="grid grid-cols-3 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="pricePerRound">€ por ronda</Label>
-                <Input id="pricePerRound" name="pricePerRound" type="number" step="0.01" defaultValue={0} />
+                <Input
+                  id="pricePerRound"
+                  name="pricePerRound"
+                  type="number"
+                  step="0.01"
+                  defaultValue={settings.defaultPricePerRound}
+                />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="pricePerGame">€ por partida</Label>
-                <Input id="pricePerGame" name="pricePerGame" type="number" step="0.01" defaultValue={0} />
+                <Input
+                  id="pricePerGame"
+                  name="pricePerGame"
+                  type="number"
+                  step="0.01"
+                  defaultValue={settings.defaultPricePerGame}
+                />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="pricePerReentry">€ reenganche</Label>
-                <Input id="pricePerReentry" name="pricePerReentry" type="number" step="0.01" defaultValue={0} />
+                <Input
+                  id="pricePerReentry"
+                  name="pricePerReentry"
+                  type="number"
+                  step="0.01"
+                  defaultValue={settings.defaultPricePerReentry}
+                />
               </div>
             </div>
           </CardContent>
@@ -96,6 +133,7 @@ export default function NuevaPartidaPage() {
                   id={`player-${i}`}
                   name="playerNames"
                   placeholder={`Nombre del jugador ${i + 1}`}
+                  defaultValue={settings.defaultPlayerNames[i] || ""}
                   required={i < 2}
                 />
               </div>

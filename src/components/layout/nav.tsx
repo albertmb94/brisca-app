@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Trophy, History, PlusCircle, Home } from "lucide-react";
+import { Trophy, History, PlusCircle, Home, Settings } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const navItems = [
@@ -7,6 +7,7 @@ const navItems = [
   { href: "/nueva-partida", label: "Nueva Partida", icon: PlusCircle },
   { href: "/historial", label: "Historial", icon: History },
   { href: "/ranking", label: "Ranking", icon: Trophy },
+  { href: "/ajustes", label: "Ajustes", icon: Settings },
 ];
 
 export function Navbar() {
