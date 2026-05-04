@@ -269,13 +269,8 @@ export async function addRound(formData: FormData) {
         })
         .eq("id", player.id);
 
-      await supabase.from("transactions").insert({
-        game_id: gameId,
-        game_player_id: player.id,
-        type: "reentry_payment",
-        amount: game.price_per_reentry,
-        round_number: roundNumber,
-      });
+      // NOTA: El pago del reenganche NO se crea aquí.
+      // Solo se paga al final de la partida, acumulado: reentry_count × price_per_reentry
     } else {
       await supabase
         .from("game_players")
