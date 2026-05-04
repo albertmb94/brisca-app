@@ -166,9 +166,12 @@ export default async function HomePage() {
                     <div className="text-sm text-muted-foreground">
                       Objetivo: {game.target_score} pts
                     </div>
-                    <Link href={`/partidas/${game.id}`}>
-                      <Button size="sm" variant="outline">Ver resumen</Button>
-                    </Link>
+                    <div className="flex gap-2 items-center">
+                      <DeleteGameButton gameId={game.id} />
+                      <Link href={`/partidas/${game.id}`}>
+                        <Button size="sm" variant="outline">Ver resumen</Button>
+                      </Link>
+                    </div>
                   </div>
                 </CardContent>
               </Card>

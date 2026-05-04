@@ -11,6 +11,7 @@ import { GameScoreboard } from "@/components/game/scoreboard";
 import { RoundForm } from "@/components/game/round-form";
 import { PaymentSummary } from "@/components/game/payment-summary";
 import { RoundHistory } from "@/components/game/round-history";
+import { CancelGameButton } from "@/components/game/cancel-game-button";
 
 function statusLabel(status: string) {
   switch (status) {
@@ -96,7 +97,7 @@ export default async function PartidaPage({ params }: { params: Promise<{ id: st
         </div>
 
         <div className="flex gap-2">
-          {isWaiting && (
+          {isWaiting && !game.rounds.length && (
             <form action={startGame.bind(null, game.id)}>
               <Button type="submit">
                 <Play className="mr-2 h-4 w-4" />
@@ -121,6 +122,11 @@ export default async function PartidaPage({ params }: { params: Promise<{ id: st
                 Reanudar
               </Button>
             </form>
+          )}
+
+          {/* Cancelar partida (en curso o pausada) */}
+          {(isInProgress || game.status === "paused" || (game.status === "waiting" && game.rounds.length > 0)) && (
+            <CancelGameButton gameId={game.id} />
           )}
         </div>
       </div>

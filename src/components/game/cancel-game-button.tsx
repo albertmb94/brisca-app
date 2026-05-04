@@ -18,7 +18,12 @@ function isRedirectError(error: any): boolean {
   return error?.message?.includes("NEXT_REDIRECT") || error?.digest?.includes("NEXT_REDIRECT");
 }
 
-export function DeleteGameButton({ gameId }: { gameId: string }) {
+interface CancelGameButtonProps {
+  gameId: string;
+  variant?: "icon" | "button";
+}
+
+export function CancelGameButton({ gameId, variant = "button" }: CancelGameButtonProps) {
   const [open, setOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
@@ -30,7 +35,7 @@ export function DeleteGameButton({ gameId }: { gameId: string }) {
       if (isRedirectError(error)) {
         return;
       }
-      alert("Error al eliminar: " + (error?.message || "Error desconocido"));
+      alert("Error al cancelar: " + (error?.message || "Error desconocido"));
       setIsDeleting(false);
       setOpen(false);
     }
@@ -39,23 +44,30 @@ export function DeleteGameButton({ gameId }: { gameId: string }) {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive">
-          <Trash2 className="h-4 w-4" />
-        </Button>
+        {variant === "icon" ? (
+          <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive">
+            <Trash2 className="h-4 w-4" />
+          </Button>
+        ) : (
+          <Button type="button" variant="ghost" className="text-destructive hover:text-destructive">
+            <Trash2 className="mr-2 h-4 w-4" />
+            Cancelar
+          </Button>
+        )}
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Eliminar partida</DialogTitle>
+          <DialogTitle>Cancelar partida</DialogTitle>
           <DialogDescription>
-            ¿Estás seguro de que quieres eliminar esta partida? Esta acción no se puede deshacer.
+            ¿Estás seguro de que quieres cancelar y eliminar esta partida? Esta acción no se puede deshacer.
           </DialogDescription>
         </DialogHeader>
         <DialogFooter>
           <Button variant="outline" onClick={() => setOpen(false)} disabled={isDeleting}>
-            Cancelar
+            No, volver
           </Button>
           <Button variant="destructive" onClick={handleDelete} disabled={isDeleting}>
-            {isDeleting ? "Eliminando..." : "Eliminar"}
+            {isDeleting ? "Eliminando..." : "Sí, cancelar partida"}
           </Button>
         </DialogFooter>
       </DialogContent>
