@@ -1,7 +1,7 @@
 export const dynamic = "force-dynamic";
 
 import Link from "next/link";
-import { PlusCircle, Play, Trophy, Clock, Users, AlertTriangle } from "lucide-react";
+import { PlusCircle, Play, Trophy, Clock, Users, AlertTriangle, Pause } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -14,6 +14,8 @@ function statusBadge(status: string) {
       return <Badge variant="secondary">En espera</Badge>;
     case "in_progress":
       return <Badge variant="default" className="bg-green-600">En juego</Badge>;
+    case "paused":
+      return <Badge variant="secondary" className="bg-amber-500 text-white">Pausada</Badge>;
     case "finished":
       return <Badge variant="outline">Finalizada</Badge>;
     default:
@@ -52,16 +54,13 @@ export default async function HomePage() {
         </Link>
       </div>
 
-      {/* Error de conexión */}
       {error && (
         <Card className="border-red-200 bg-red-50 dark:bg-red-950">
           <CardContent className="flex items-start gap-3 py-4">
             <AlertTriangle className="h-5 w-5 text-red-600 mt-0.5 shrink-0" />
             <div>
               <p className="font-medium text-red-800 dark:text-red-200">Error de conexión</p>
-              <p className="text-sm text-red-700 dark:text-red-300 mt-1">
-                {error}
-              </p>
+              <p className="text-sm text-red-700 dark:text-red-300 mt-1">{error}</p>
               <p className="text-sm text-red-600 dark:text-red-400 mt-2">
                 Verifica que las variables de entorno de Supabase estén configuradas correctamente en Vercel.
               </p>
@@ -70,11 +69,10 @@ export default async function HomePage() {
         </Card>
       )}
 
-      {/* Estadísticas rápidas */}
       <div className="grid gap-4 md:grid-cols-3">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Partidas Activas</CardTitle>
+            <CardTitle className="text-sm font-medium">Activas / Pausadas</CardTitle>
             <Play className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -83,7 +81,7 @@ export default async function HomePage() {
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Partidas Jugadas</CardTitle>
+            <CardTitle className="text-sm font-medium">Finalizadas</CardTitle>
             <Trophy className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -92,7 +90,7 @@ export default async function HomePage() {
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Partidas</CardTitle>
+            <CardTitle className="text-sm font-medium">Total</CardTitle>
             <Clock className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -101,7 +99,6 @@ export default async function HomePage() {
         </Card>
       </div>
 
-      {/* Partidas activas */}
       {activeGames.length > 0 && (
         <div className="space-y-4">
           <h2 className="text-xl font-semibold">Partidas Activas</h2>
@@ -121,12 +118,23 @@ export default async function HomePage() {
                 <CardContent className="pt-0">
                   <div className="flex items-center justify-between">
                     <div className="text-sm text-muted-foreground">
-                      Objetivo: {game.target_score} pts
+                      {game.status === "paused" || (game.status === "waiting" && game.rounds?.length > 0) ? (
+                        <span className="flex items-center gap-1 text-amber-600">
+                          <Pause className="h-3 w-3" />
+                          Pausada · {game.rounds?.length || 0} rondas jugadas
+                        </span>
+                      ) : (
+                        <>Objetivo: {game.target_score} pts</>
+                      )}
                     </div>
                     <div className="flex gap-2 items-center">
                       <DeleteGameButton gameId={game.id} />
                       <Link href={`/partidas/${game.id}`}>
-                        <Button size="sm">Ver partida</Button>
+                        <Button size="sm">
+                          {game.status === "paused" || (game.status === "waiting" && game.rounds?.length > 0)
+                            ? "Reanudar"
+                            : "Ver"}
+                        </Button>
                       </Link>
                     </div>
                   </div>
@@ -137,7 +145,6 @@ export default async function HomePage() {
         </div>
       )}
 
-      {/* Partidas finalizadas recientes */}
       {finishedGames.length > 0 && (
         <div className="space-y-4">
           <h2 className="text-xl font-semibold">Partidas Finalizadas</h2>

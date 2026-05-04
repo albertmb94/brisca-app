@@ -1,12 +1,12 @@
 export const dynamic = "force-dynamic";
 
 import Link from "next/link";
-import { ArrowLeft, Play, AlertTriangle } from "lucide-react";
+import { ArrowLeft, Play, Pause, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { getGame } from "@/lib/actions/game-actions";
-import { startGame } from "@/lib/actions/game-actions";
+import { startGame, pauseGame, resumeGame } from "@/lib/actions/game-actions";
 import { GameScoreboard } from "@/components/game/scoreboard";
 import { RoundForm } from "@/components/game/round-form";
 import { PaymentSummary } from "@/components/game/payment-summary";
@@ -16,8 +16,19 @@ function statusLabel(status: string) {
   switch (status) {
     case "waiting": return "En espera";
     case "in_progress": return "En juego";
+    case "paused": return "Pausada";
     case "finished": return "Finalizada";
     default: return status;
+  }
+}
+
+function statusBadgeVariant(status: string) {
+  switch (status) {
+    case "waiting": return "secondary";
+    case "in_progress": return "default";
+    case "paused": return "secondary";
+    case "finished": return "outline";
+    default: return "secondary";
   }
 }
 
@@ -59,6 +70,7 @@ export default async function PartidaPage({ params }: { params: Promise<{ id: st
 
   const isWaiting = game.status === "waiting";
   const isInProgress = game.status === "in_progress";
+  const isPaused = game.status === "paused" || game.status === "waiting";
   const isFinished = game.status === "finished";
 
   return (
@@ -73,7 +85,7 @@ export default async function PartidaPage({ params }: { params: Promise<{ id: st
           <div>
             <h1 className="text-2xl font-bold">{game.name}</h1>
             <div className="flex items-center gap-2 mt-1">
-              <Badge variant={isInProgress ? "default" : isFinished ? "outline" : "secondary"}>
+              <Badge variant={statusBadgeVariant(game.status) as any}>
                 {statusLabel(game.status)}
               </Badge>
               <span className="text-sm text-muted-foreground">
@@ -83,15 +95,46 @@ export default async function PartidaPage({ params }: { params: Promise<{ id: st
           </div>
         </div>
 
-        {isWaiting && (
-          <form action={startGame.bind(null, game.id)}>
-            <Button type="submit">
-              <Play className="mr-2 h-4 w-4" />
-              Iniciar Partida
-            </Button>
-          </form>
-        )}
+        <div className="flex gap-2">
+          {isWaiting && (
+            <form action={startGame.bind(null, game.id)}>
+              <Button type="submit">
+                <Play className="mr-2 h-4 w-4" />
+                Iniciar Partida
+              </Button>
+            </form>
+          )}
+
+          {isInProgress && (
+            <form action={pauseGame.bind(null, game.id)}>
+              <Button type="submit" variant="outline">
+                <Pause className="mr-2 h-4 w-4" />
+                Pausar
+              </Button>
+            </form>
+          )}
+
+          {(game.status === "paused" || (game.status === "waiting" && game.rounds.length > 0)) && (
+            <form action={resumeGame.bind(null, game.id)}>
+              <Button type="submit">
+                <Play className="mr-2 h-4 w-4" />
+                Reanudar
+              </Button>
+            </form>
+          )}
+        </div>
       </div>
+
+      {/* Mensaje si está pausada */}
+      {(game.status === "paused" || (game.status === "waiting" && game.rounds.length > 0)) && (
+        <Card className="bg-amber-50 dark:bg-amber-950 border-amber-200 dark:border-amber-800">
+          <CardContent className="py-3">
+            <p className="text-sm text-amber-800 dark:text-amber-200">
+              Partida pausada. Puedes reanudarla cuando quieras para seguir jugando.
+            </p>
+          </CardContent>
+        </Card>
+      )}
 
       <GameScoreboard game={game} />
 

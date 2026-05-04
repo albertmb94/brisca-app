@@ -1,4 +1,4 @@
-export type GameStatus = 'waiting' | 'in_progress' | 'finished';
+export type GameStatus = 'waiting' | 'in_progress' | 'finished' | 'paused';
 export type PlayerStatus = 'active' | 'eliminated' | 'winner';
 export type TransactionType = 'round_payment' | 'game_payment' | 'reentry_payment';
 

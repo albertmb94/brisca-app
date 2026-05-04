@@ -6,65 +6,60 @@ import { redirect } from "next/navigation";
 
 // Crear una nueva partida
 export async function createGame(formData: FormData) {
-  try {
-    const supabase = await createClient();
+  const supabase = await createClient();
 
-    const name = formData.get("name") as string;
-    const maxPlayers = parseInt(formData.get("maxPlayers") as string) || 8;
-    const targetScore = parseInt(formData.get("targetScore") as string) || 150;
-    const pricePerRound = parseFloat(formData.get("pricePerRound") as string) || 0;
-    const pricePerGame = parseFloat(formData.get("pricePerGame") as string) || 0;
-    const pricePerReentry = parseFloat(formData.get("pricePerReentry") as string) || 0;
-    const playerNames = formData.getAll("playerNames") as string[];
+  const name = formData.get("name") as string;
+  const maxPlayers = parseInt(formData.get("maxPlayers") as string) || 8;
+  const targetScore = parseInt(formData.get("targetScore") as string) || 150;
+  const pricePerRound = parseFloat(formData.get("pricePerRound") as string) || 0;
+  const pricePerGame = parseFloat(formData.get("pricePerGame") as string) || 0;
+  const pricePerReentry = parseFloat(formData.get("pricePerReentry") as string) || 0;
+  const playerNames = formData.getAll("playerNames") as string[];
 
-    // Crear partida
-    const { data: game, error: gameError } = await supabase
-      .from("games")
-      .insert({
-        name,
-        max_players: maxPlayers,
-        target_score: targetScore,
-        price_per_round: pricePerRound,
-        price_per_game: pricePerGame,
-        price_per_reentry: pricePerReentry,
-        status: "waiting",
-      })
-      .select()
-      .single();
+  // Crear partida
+  const { data: game, error: gameError } = await supabase
+    .from("games")
+    .insert({
+      name,
+      max_players: maxPlayers,
+      target_score: targetScore,
+      price_per_round: pricePerRound,
+      price_per_game: pricePerGame,
+      price_per_reentry: pricePerReentry,
+      status: "waiting",
+    })
+    .select()
+    .single();
 
-    if (gameError || !game) {
-      throw new Error("Error al crear la partida: " + gameError?.message);
-    }
-
-    // Crear jugadores (invitados solo con nombre)
-    const players = playerNames
-      .filter((n) => n.trim() !== "")
-      .map((name, index) => ({
-        game_id: game.id,
-        guest_name: name.trim(),
-        position: index + 1,
-      }));
-
-    if (players.length === 0) {
-      await supabase.from("games").delete().eq("id", game.id);
-      throw new Error("Debes añadir al menos un jugador");
-    }
-
-    const { error: playersError } = await supabase
-      .from("game_players")
-      .insert(players);
-
-    if (playersError) {
-      await supabase.from("games").delete().eq("id", game.id);
-      throw new Error("Error al añadir jugadores: " + playersError.message);
-    }
-
-    revalidatePath("/");
-    redirect(`/partidas/${game.id}`);
-  } catch (error: any) {
-    console.error("[createGame error]", error);
-    throw error;
+  if (gameError || !game) {
+    throw new Error("Error al crear la partida: " + gameError?.message);
   }
+
+  // Crear jugadores (invitados solo con nombre)
+  const players = playerNames
+    .filter((n) => n.trim() !== "")
+    .map((name, index) => ({
+      game_id: game.id,
+      guest_name: name.trim(),
+      position: index + 1,
+    }));
+
+  if (players.length === 0) {
+    await supabase.from("games").delete().eq("id", game.id);
+    throw new Error("Debes añadir al menos un jugador");
+  }
+
+  const { error: playersError } = await supabase
+    .from("game_players")
+    .insert(players);
+
+  if (playersError) {
+    await supabase.from("games").delete().eq("id", game.id);
+    throw new Error("Error al añadir jugadores: " + playersError.message);
+  }
+
+  revalidatePath("/");
+  redirect(`/partidas/${game.id}`);
 }
 
 // Obtener listado de partidas
@@ -351,13 +346,36 @@ export async function addRound(formData: FormData) {
 
 // Eliminar partida
 export async function deleteGame(gameId: string) {
-  try {
-    const supabase = await createClient();
-    await supabase.from("games").delete().eq("id", gameId);
-    revalidatePath("/");
-    redirect("/");
-  } catch (error: any) {
-    console.error("[deleteGame error]", error);
-    throw error;
-  }
+  const supabase = await createClient();
+  await supabase.from("games").delete().eq("id", gameId);
+  revalidatePath("/");
+  redirect("/");
+}
+
+// Pausar partida (volver a waiting)
+export async function pauseGame(gameId: string) {
+  const supabase = await createClient();
+
+  const { error } = await supabase
+    .from("games")
+    .update({ status: "waiting" })
+    .eq("id", gameId);
+
+  if (error) throw new Error(error.message);
+  revalidatePath("/");
+  revalidatePath(`/partidas/${gameId}`);
+}
+
+// Reanudar partida (volver a in_progress)
+export async function resumeGame(gameId: string) {
+  const supabase = await createClient();
+
+  const { error } = await supabase
+    .from("games")
+    .update({ status: "in_progress" })
+    .eq("id", gameId);
+
+  if (error) throw new Error(error.message);
+  revalidatePath("/");
+  revalidatePath(`/partidas/${gameId}`);
 }
