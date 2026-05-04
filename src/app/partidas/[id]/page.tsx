@@ -1,7 +1,7 @@
 import Link from "next/link";
-import { ArrowLeft, Play } from "lucide-react";
+import { ArrowLeft, Play, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { getGame } from "@/lib/actions/game-actions";
 import { startGame } from "@/lib/actions/game-actions";
@@ -21,15 +21,36 @@ function statusLabel(status: string) {
 
 export default async function PartidaPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const game = await getGame(id);
+  let game: any = null;
+  let error: string | null = null;
 
-  if (!game) {
+  try {
+    game = await getGame(id);
+  } catch (e: any) {
+    console.error("[PartidaPage] Error cargando partida:", e);
+    error = e.message || "Error al cargar la partida";
+  }
+
+  if (error || !game) {
     return (
-      <div className="text-center py-12">
-        <h1 className="text-2xl font-bold">Partida no encontrada</h1>
-        <Link href="/" className="text-primary hover:underline mt-4 inline-block">
-          Volver al inicio
+      <div className="max-w-xl mx-auto space-y-6">
+        <Link href="/">
+          <Button variant="ghost" size="sm">
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Volver al inicio
+          </Button>
         </Link>
+        <Card className="border-red-200 bg-red-50 dark:bg-red-950">
+          <CardContent className="flex items-start gap-3 py-6">
+            <AlertTriangle className="h-5 w-5 text-red-600 mt-0.5 shrink-0" />
+            <div>
+              <p className="font-medium text-red-800 dark:text-red-200">Error al cargar la partida</p>
+              <p className="text-sm text-red-700 dark:text-red-300 mt-1">
+                {error || "La partida no existe o no se pudo conectar con la base de datos."}
+              </p>
+            </div>
+          </CardContent>
+        </Card>
       </div>
     );
   }
@@ -70,25 +91,14 @@ export default async function PartidaPage({ params }: { params: Promise<{ id: st
         )}
       </div>
 
-      {/* Scoreboard */}
       <GameScoreboard game={game} />
 
-      {/* Formulario de ronda (solo en progreso) */}
-      {isInProgress && (
-        <RoundForm game={game} />
-      )}
+      {isInProgress && <RoundForm game={game} />}
 
-      {/* Historial de rondas */}
-      {game.rounds.length > 0 && (
-        <RoundHistory game={game} />
-      )}
+      {game.rounds.length > 0 && <RoundHistory game={game} />}
 
-      {/* Resumen de pagos (solo finalizada) */}
-      {isFinished && (
-        <PaymentSummary game={game} />
-      )}
+      {isFinished && <PaymentSummary game={game} />}
 
-      {/* Info de precios */}
       <Card className="bg-muted/50">
         <CardHeader className="pb-2">
           <CardTitle className="text-sm">Configuración de pagos</CardTitle>
