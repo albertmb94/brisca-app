@@ -8,6 +8,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { addRound } from "@/lib/actions/game-actions";
 
+function isRedirectError(error: any): boolean {
+  return error?.message?.includes("NEXT_REDIRECT") || error?.digest?.includes("NEXT_REDIRECT");
+}
+
 interface RoundFormProps {
   game: any;
 }
@@ -22,8 +26,11 @@ export function RoundForm({ game }: RoundFormProps) {
     const formData = new FormData(e.currentTarget);
     try {
       await addRound(formData);
-    } catch (error) {
-      alert("Error al registrar ronda: " + (error as Error).message);
+    } catch (error: any) {
+      if (isRedirectError(error)) {
+        return;
+      }
+      alert("Error al registrar ronda: " + (error?.message || "Error desconocido"));
     } finally {
       setIsSubmitting(false);
     }

@@ -9,6 +9,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { createGame } from "@/lib/actions/game-actions";
 
+function isRedirectError(error: any): boolean {
+  return error?.message?.includes("NEXT_REDIRECT") || error?.digest?.includes("NEXT_REDIRECT");
+}
+
 export default function NuevaPartidaPage() {
   const router = useRouter();
   const [playerCount, setPlayerCount] = useState(3);
@@ -20,8 +24,12 @@ export default function NuevaPartidaPage() {
     const formData = new FormData(e.currentTarget);
     try {
       await createGame(formData);
-    } catch (error) {
-      alert("Error al crear la partida: " + (error as Error).message);
+    } catch (error: any) {
+      // Ignorar errores de redirección (son navegación normal, no errores reales)
+      if (isRedirectError(error)) {
+        return;
+      }
+      alert("Error al crear la partida: " + (error?.message || "Error desconocido"));
       setIsSubmitting(false);
     }
   };
